@@ -100,6 +100,9 @@ Hay un atajo en la UI para cargar automáticamente un escenario completo de prod
 2. Presionar **Agregar Producto**.
 3. El sistema inserta un set predefinido de 10 productos con pesos, dimensiones y cantidades.
 
+## Screenshot
+<img width="1000" height="829" alt="image" src="https://github.com/user-attachments/assets/dd394cca-277f-4c46-8819-63e9973a32e3" />
+
 ### Dataset cargado por DEFAULT
 - Notebook — 2.1 kg — cant. 30 — 36×6×30
 - Tablet — 0.6 kg — cant. 60 — 26×4×20
