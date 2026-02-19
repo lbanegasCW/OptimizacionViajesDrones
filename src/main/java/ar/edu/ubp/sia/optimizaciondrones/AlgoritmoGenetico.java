@@ -13,6 +13,10 @@ import java.util.Random;
  */
 public class AlgoritmoGenetico {
 
+    private static final long SEMILLA_MEZCLA_INICIAL = 42L;
+    private static final double PESO_FITNESS_APROVECHAMIENTO = 0.7;
+    private static final double PESO_FITNESS_VIAJES = 0.3;
+
     private final Map<String, Double> pesosProductos;
     private final Map<String, Double> volumenProductos;
     private final Map<String, Integer> pedido;
@@ -80,7 +84,7 @@ public class AlgoritmoGenetico {
             }
         }
 
-        Random random = new Random(42);
+        Random random = new Random(SEMILLA_MEZCLA_INICIAL);
         for (int i = genes.length - 1; i > 0; i--) {
             int j = random.nextInt(i + 1);
             int temp = genes[i];
@@ -112,6 +116,20 @@ public class AlgoritmoGenetico {
      */
     private double evaluarFitness(Cromosoma cromosoma) {
         List<ViajeOptimo> viajes = decodificarCromosomaAViajes(cromosoma);
+        if (!cubrePedidoCompleto(viajes)) {
+            return 0.0;
+        }
+
+        double aprovechamientoPromedio = calcularAprovechamientoPromedio(viajes);
+        double penalizacionViajes = Math.pow(1.0 / viajes.size(), 2);
+        double bonusAprovechamiento = Math.pow(aprovechamientoPromedio, 3);
+
+        return (bonusAprovechamiento * PESO_FITNESS_APROVECHAMIENTO)
+                + (penalizacionViajes * PESO_FITNESS_VIAJES);
+    }
+
+    /** Verifica si los viajes cubren por completo las unidades solicitadas en el pedido. */
+    private boolean cubrePedidoCompleto(List<ViajeOptimo> viajes) {
         Map<String, Integer> productosEnViajes = new HashMap<>();
 
         for (ViajeOptimo viaje : viajes) {
@@ -124,22 +142,21 @@ public class AlgoritmoGenetico {
             int cantidadPedido = pedido.get(producto);
             int cantidadEnviada = productosEnViajes.getOrDefault(producto, 0);
             if (cantidadEnviada < cantidadPedido) {
-                return 0.0;
+                return false;
             }
         }
+        return true;
+    }
 
+    /** Calcula el promedio de aprovechamiento combinando utilización de peso y volumen. */
+    private double calcularAprovechamientoPromedio(List<ViajeOptimo> viajes) {
         double sumaAprovechamiento = 0.0;
         for (ViajeOptimo viaje : viajes) {
             double usoPeso = viaje.calcularPorcentajeUtilizacion(config.getPesoMaximoPorViaje());
             double usoVolumen = viaje.calcularPorcentajeUtilizacionVolumen(config.getCapacidadVolumenCaja());
             sumaAprovechamiento += (usoPeso + usoVolumen) / 2.0;
         }
-
-        double aprovechamientoPromedio = sumaAprovechamiento / viajes.size();
-        double penalizacionViajes = Math.pow(1.0 / viajes.size(), 2);
-        double bonusAprovechamiento = Math.pow(aprovechamientoPromedio, 3);
-
-        return (bonusAprovechamiento * 0.7) + (penalizacionViajes * 0.3);
+        return sumaAprovechamiento / viajes.size();
     }
 
     /**
