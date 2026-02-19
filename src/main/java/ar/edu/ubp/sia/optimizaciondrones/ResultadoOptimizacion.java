@@ -2,11 +2,9 @@ package ar.edu.ubp.sia.optimizaciondrones;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Representa los resultados finales de la ejecución del algoritmo genético.
- * Incluye información sobre viajes, estadísticas y parámetros de configuración.
+ * DTO de salida del algoritmo genético con viajes, métricas agregadas y configuración usada.
  */
 public class ResultadoOptimizacion {
 
@@ -24,7 +22,8 @@ public class ResultadoOptimizacion {
     private double eficienciaVolumenPromedio = -1;
     private int totalProductosTransportados = -1;
 
-    public ResultadoOptimizacion() {}
+    public ResultadoOptimizacion() {
+    }
 
     public double getMejorAptitud() {
         return mejorAptitud;
@@ -62,11 +61,11 @@ public class ResultadoOptimizacion {
         this.historialFitness = historialFitness;
     }
 
-    /**
-     * Calcula estadísticas generales a partir de los viajes optimizados.
-     */
+    /** Recalcula métricas agregadas de peso, volumen y eficiencia a partir de los viajes actuales. */
     public void calcularEstadisticas() {
-        if (viajes == null || viajes.isEmpty() || configuracion == null) return;
+        if (viajes == null || viajes.isEmpty() || configuracion == null) {
+            return;
+        }
 
         double sumaPesos = 0.0;
         double sumaVolumenes = 0.0;
@@ -83,10 +82,8 @@ public class ResultadoOptimizacion {
 
             sumaPesos += peso;
             sumaVolumenes += volumen;
-
             sumaEficienciaPeso += viaje.calcularPorcentajeUtilizacion(pesoMax);
             sumaEficienciaVolumen += viaje.calcularPorcentajeUtilizacionVolumen(volumenMax);
-
             contadorProductos += viaje.contarCantidadTotalDeProductos();
         }
 
@@ -97,9 +94,7 @@ public class ResultadoOptimizacion {
         this.totalProductosTransportados = contadorProductos;
     }
 
-    /**
-     * Devuelve un resumen en forma de String del resultado de la optimización.
-     */
+    /** @return resumen textual con métricas principales de la optimización. */
     public String obtenerResumen() {
         calcularEstadisticas();
 
@@ -117,29 +112,38 @@ public class ResultadoOptimizacion {
         return sb.toString();
     }
 
-    // Getters adicionales
     public double getPesoTotalTransportado() {
-        if (pesoTotalTransportado < 0) calcularEstadisticas();
+        if (pesoTotalTransportado < 0) {
+            calcularEstadisticas();
+        }
         return pesoTotalTransportado;
     }
 
     public double getVolumenTotalTransportado() {
-        if (volumenTotalTransportado < 0) calcularEstadisticas();
+        if (volumenTotalTransportado < 0) {
+            calcularEstadisticas();
+        }
         return volumenTotalTransportado;
     }
 
     public double getEficienciaPesoPromedio() {
-        if (eficienciaPesoPromedio < 0) calcularEstadisticas();
+        if (eficienciaPesoPromedio < 0) {
+            calcularEstadisticas();
+        }
         return eficienciaPesoPromedio;
     }
 
     public double getEficienciaVolumenPromedio() {
-        if (eficienciaVolumenPromedio < 0) calcularEstadisticas();
+        if (eficienciaVolumenPromedio < 0) {
+            calcularEstadisticas();
+        }
         return eficienciaVolumenPromedio;
     }
 
     public int getTotalProductosTransportados() {
-        if (totalProductosTransportados < 0) calcularEstadisticas();
+        if (totalProductosTransportados < 0) {
+            calcularEstadisticas();
+        }
         return totalProductosTransportados;
     }
 
@@ -151,8 +155,11 @@ public class ResultadoOptimizacion {
         return configuracion;
     }
 
+    /** Cuenta viajes con eficiencia de peso mayor o igual a un umbral dado. */
     public int contarViajesConEficienciaPesoMinima(double umbralPorcentaje) {
-        if (viajes == null) return 0;
+        if (viajes == null || configuracion == null) {
+            return 0;
+        }
 
         return (int) viajes.stream()
                 .mapToDouble(v -> v.calcularPorcentajeUtilizacion(configuracion.getPesoMaximoPorViaje()))
@@ -160,8 +167,11 @@ public class ResultadoOptimizacion {
                 .count();
     }
 
+    /** Cuenta viajes con eficiencia de volumen mayor o igual a un umbral dado. */
     public int contarViajesConEficienciaVolumenMinima(double umbralPorcentaje) {
-        if (viajes == null) return 0;
+        if (viajes == null || configuracion == null) {
+            return 0;
+        }
 
         return (int) viajes.stream()
                 .mapToDouble(v -> v.calcularPorcentajeUtilizacionVolumen(configuracion.getCapacidadVolumenCaja()))

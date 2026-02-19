@@ -1,8 +1,7 @@
 package ar.edu.ubp.sia.optimizaciondrones;
 
 /**
- * Clase que encapsula la configuración del Algoritmo Genético
- *
+ * Encapsula parámetros de configuración para una ejecución del algoritmo genético.
  */
 public class ConfiguracionAG {
 
@@ -16,7 +15,9 @@ public class ConfiguracionAG {
     private int pesoMaximoPorViaje;
     private double capacidadVolumenCaja;
 
-
+    /**
+     * Construye una configuración completa para ejecutar la optimización.
+     */
     public ConfiguracionAG(String tipoSeleccion, String tipoCruza, String tipoMutacion,
                            int tamanoPoblacion, int numeroGeneraciones, double probabilidadCruza,
                            double probabilidadMutacion, int pesoMaximoPorViaje, double capacidadVolumenCaja) {
@@ -31,33 +32,44 @@ public class ConfiguracionAG {
         this.capacidadVolumenCaja = capacidadVolumenCaja;
     }
 
-    /**
-     * Valida los parámetros mínimos para ejecución del algoritmo
-     * @return true si configuración es válida
-     */
+    /** @return true si los parámetros básicos permiten una ejecución válida. */
     public boolean esValida() {
-        return tamanoPoblacion > 0 &&
-                numeroGeneraciones > 0 &&
-                probabilidadCruza >= 0 && probabilidadCruza <= 1 &&
-                probabilidadMutacion >= 0 && probabilidadMutacion <= 1 &&
-                tipoSeleccion != null && !tipoSeleccion.isEmpty() &&
-                tipoCruza != null && !tipoCruza.isEmpty() &&
-                tipoMutacion != null && !tipoMutacion.isEmpty();
+        return tamanoPoblacion > 0
+                && numeroGeneraciones > 0
+                && probabilidadCruza >= 0 && probabilidadCruza <= 1
+                && probabilidadMutacion >= 0 && probabilidadMutacion <= 1
+                && tipoSeleccion != null && !tipoSeleccion.isEmpty()
+                && tipoCruza != null && !tipoCruza.isEmpty()
+                && tipoMutacion != null && !tipoMutacion.isEmpty();
     }
 
-    public String getTipoSeleccion() { return tipoSeleccion; }
+    public String getTipoSeleccion() {
+        return tipoSeleccion;
+    }
 
-    public String getTipoCruza() { return tipoCruza; }
+    public String getTipoCruza() {
+        return tipoCruza;
+    }
 
-    public String getTipoMutacion() { return tipoMutacion; }
+    public String getTipoMutacion() {
+        return tipoMutacion;
+    }
 
-    public int getTamanoPoblacion() { return tamanoPoblacion; }
+    public int getTamanoPoblacion() {
+        return tamanoPoblacion;
+    }
 
-    public int getNumeroGeneraciones() { return numeroGeneraciones; }
+    public int getNumeroGeneraciones() {
+        return numeroGeneraciones;
+    }
 
-    public double getProbabilidadCruza() { return probabilidadCruza; }
+    public double getProbabilidadCruza() {
+        return probabilidadCruza;
+    }
 
-    public double getProbabilidadMutacion() { return probabilidadMutacion; }
+    public double getProbabilidadMutacion() {
+        return probabilidadMutacion;
+    }
 
     public int getPesoMaximoPorViaje() {
         return pesoMaximoPorViaje;
@@ -72,5 +84,4 @@ public class ConfiguracionAG {
         return String.format("ConfiguracionAG[seleccion=%s, cruza=%s, mutacion=%s, poblacion=%d, generaciones=%d, pCruza=%.2f, pMutacion=%.2f]",
                 tipoSeleccion, tipoCruza, tipoMutacion, tamanoPoblacion, numeroGeneraciones, probabilidadCruza, probabilidadMutacion);
     }
-
 }
