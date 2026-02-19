@@ -3,33 +3,31 @@ package ar.edu.ubp.sia.optimizaciondrones;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Utilidad manual para validar comportamiento básico de operadores de cruza.
+ */
 public class TestCruzas {
 
+    /** Ejecuta validaciones simples por consola para cada estrategia de cruza. */
     public static void main(String[] args) {
-        // Crear cromosomas padres
-        int[] genesPadre1 = new int[10];
-        int[] genesPadre2 = new int[10];
-        for (int i = 0; i < 10; i++) {
-            genesPadre1[i] = i;
-            genesPadre2[i] = 9 - i;
-        }
-        Cromosoma padre1 = new Cromosoma(genesPadre1);
-        Cromosoma padre2 = new Cromosoma(genesPadre2);
+        Cromosoma padre1 = new Cromosoma(new int[]{1, 2, 3, 4, 5, 6, 7, 8});
+        Cromosoma padre2 = new Cromosoma(new int[]{8, 7, 6, 5, 4, 3, 2, 1});
 
-        // Instanciar cruzas
-        Cruza[] cruzas = new Cruza[] {
+        Cruza[] cruzas = {
                 new CruzaUnPunto(),
                 new CruzaDosPuntos(),
-                new CruzaUniforme()  // Ajusta el nombre si tu clase se llama distinto
+                new CruzaUniforme()
         };
 
         for (Cruza cruza : cruzas) {
             System.out.println("Probando cruza: " + cruza.getClass().getSimpleName());
+
             Cromosoma[] hijos = cruza.cruzar(padre1, padre2);
             for (int i = 0; i < hijos.length; i++) {
                 int[] genesHijo = hijos[i].getGenes();
+                int[] genesPadre1 = padre1.getGenes();
+                int[] genesPadre2 = padre2.getGenes();
 
-                // Validaciones
                 if (contieneValor(genesHijo, -1)) {
                     System.err.println("Error: hijo " + i + " contiene -1 en genes.");
                 } else {
@@ -52,17 +50,26 @@ public class TestCruzas {
 
     private static boolean contieneValor(int[] array, int valor) {
         for (int v : array) {
-            if (v == valor) return true;
+            if (v == valor) {
+                return true;
+            }
         }
         return false;
     }
 
     private static boolean mismosGenes(int[] a, int[] b) {
-        if (a.length != b.length) return false;
+        if (a.length != b.length) {
+            return false;
+        }
+
         Set<Integer> setA = new HashSet<>();
         Set<Integer> setB = new HashSet<>();
-        for (int v : a) setA.add(v);
-        for (int v : b) setB.add(v);
+        for (int v : a) {
+            setA.add(v);
+        }
+        for (int v : b) {
+            setB.add(v);
+        }
         return setA.equals(setB);
     }
 }

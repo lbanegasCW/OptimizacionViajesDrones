@@ -1,37 +1,35 @@
 package ar.edu.ubp.sia.optimizaciondrones;
 
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 /**
- * Selección por ranking
+ * Selección por ranking: asigna mayor probabilidad a mejores individuos
+ * según su posición ordenada por fitness.
  */
 public class SeleccionRanking implements Seleccion {
 
     private final Random random = new Random();
 
+    /** {@inheritDoc} */
     @Override
     public Cromosoma seleccionar(List<Cromosoma> poblacion) {
-        int n = poblacion.size();
+        List<Cromosoma> ordenados = new ArrayList<>(poblacion);
+        Collections.sort(ordenados);
 
-        // Clonamos la lista y la ordenamos por fitness ascendente
-        List<Cromosoma> ordenados = poblacion.stream()
-                .sorted(Comparator.comparingDouble(Cromosoma::getFitness))
-                .toList();
+        int n = ordenados.size();
+        int sumaRankings = n * (n + 1) / 2;
 
-        // Cálculo de la suma de rankings (triangular)
-        double sumaRankings = n * (n + 1) / 2.0;
-
-        // Generamos probabilidades acumuladas
         double[] acumuladas = new double[n];
-        acumuladas[0] = 1.0 / sumaRankings;
-
-        for (int i = 1; i < n; i++) {
-            acumuladas[i] = acumuladas[i - 1] + (i + 1) / sumaRankings;
+        double acumulado = 0;
+        for (int i = 0; i < n; i++) {
+            double prob = (double) (n - i) / sumaRankings;
+            acumulado += prob;
+            acumuladas[i] = acumulado;
         }
 
-        // Selección por ruleta
         double r = random.nextDouble();
         for (int i = 0; i < n; i++) {
             if (r <= acumuladas[i]) {
@@ -39,6 +37,6 @@ public class SeleccionRanking implements Seleccion {
             }
         }
 
-        return ordenados.get(n - 1).clonar(); // fallback por seguridad
+        return ordenados.get(n - 1).clonar();
     }
 }

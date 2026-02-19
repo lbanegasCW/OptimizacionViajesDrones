@@ -3,33 +3,32 @@ package ar.edu.ubp.sia.optimizaciondrones;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Selección por ruleta (fitness proporcional)
- */
+/** Implementa selección proporcional al fitness (ruleta). */
 public class SeleccionRuleta implements Seleccion {
-
     private final Random random = new Random();
 
+    /** {@inheritDoc} */
     @Override
     public Cromosoma seleccionar(List<Cromosoma> poblacion) {
-        double sumaFitness = poblacion.stream()
-                .mapToDouble(c -> Math.max(0, c.getFitness()))
-                .sum();
+        double sumaFitness = 0;
+        for (Cromosoma c : poblacion) {
+            sumaFitness += c.getFitness();
+        }
 
         if (sumaFitness == 0) {
-            // Selección aleatoria si todos fitness son cero
-            return poblacion.get(random.nextInt(poblacion.size()));
+            return poblacion.get(random.nextInt(poblacion.size())).clonar();
         }
 
-        double punto = random.nextDouble() * sumaFitness;
-        double acumulado = 0.0;
+        double valor = random.nextDouble() * sumaFitness;
+        double acumulado = 0;
+
         for (Cromosoma c : poblacion) {
-            acumulado += Math.max(0, c.getFitness());
-            if (acumulado >= punto) {
-                return c;
+            acumulado += c.getFitness();
+            if (acumulado >= valor) {
+                return c.clonar();
             }
         }
-        return poblacion.get(poblacion.size() - 1);
-    }
 
+        return poblacion.get(poblacion.size() - 1).clonar();
+    }
 }

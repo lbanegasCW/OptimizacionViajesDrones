@@ -2,22 +2,25 @@ package ar.edu.ubp.sia.optimizaciondrones;
 
 import java.util.Random;
 
+/** Mutación puntual que reemplaza un gen por otro valor aleatorio válido. */
 public class MutacionSimple implements Mutacion {
 
     private final Random random = new Random();
 
+    /** {@inheritDoc} */
     @Override
     public void mutar(Cromosoma cromosoma) {
-        int longitud = cromosoma.getGenes().length;
+        int longitud = cromosoma.getLongitud();
+        if (longitud == 0) {
+            return;
+        }
+
         int posicion = random.nextInt(longitud);
-
-        int valorActual = cromosoma.getGenes()[posicion];
-        // Genera un nuevo gen distinto al actual, en rango [0, longitud-1]
-        int nuevoValor;
+        int nuevoGen;
         do {
-            nuevoValor = random.nextInt(longitud);
-        } while (nuevoValor == valorActual);
+            nuevoGen = random.nextInt(longitud);
+        } while (nuevoGen == cromosoma.getGene(posicion));
 
-        cromosoma.setGene(posicion, nuevoValor);
+        cromosoma.setGene(posicion, nuevoGen);
     }
 }

@@ -4,25 +4,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Representa un viaje realizado por un dron, incluyendo los productos transportados y el peso total.
+ * Entidad de dominio que representa un viaje optimizado con su carga de productos.
  */
 public class ViajeOptimo {
 
-    /** Mapa de productos y sus respectivas cantidades. */
     private final Map<String, Integer> productos;
-
-    /** Peso total de todos los productos del viaje. */
     private double pesoTotal;
-
-    /** Volumen total de todos los productos del viaje. */
     private double volumenTotal;
-
-    /** Número identificador del viaje. */
     private int numeroViaje;
 
-    /**
-     * Crea un viaje vacío con número por defecto.
-     */
+    /** Crea un viaje vacío sin número asignado. */
     public ViajeOptimo() {
         this.productos = new HashMap<>();
         this.pesoTotal = 0.0;
@@ -30,31 +21,21 @@ public class ViajeOptimo {
     }
 
     /**
-     * Crea un viaje vacío con un número de identificación especificado.
+     * Crea un viaje vacío con un número de identificación.
      *
-     * @param numeroViaje el número del viaje
+     * @param numeroViaje identificador del viaje
      */
     public ViajeOptimo(int numeroViaje) {
         this();
         this.numeroViaje = numeroViaje;
     }
 
-    /**
-     * Verifica si el viaje está dentro del límite de peso permitido.
-     *
-     * @param pesoMaximo el peso máximo que puede cargar el dron
-     * @return true si el peso total es menor o igual al máximo permitido, false en caso contrario
-     */
+    /** @return true cuando el peso total no excede el máximo permitido. */
     public boolean estaDentroDelLimite(double pesoMaximo) {
         return pesoTotal <= pesoMaximo;
     }
 
-    /**
-     * Calcula el porcentaje de utilización de la capacidad de carga del dron.
-     *
-     * @param pesoMaximo el peso máximo permitido
-     * @return el porcentaje de capacidad utilizada
-     */
+    /** @return porcentaje de uso de capacidad de peso. */
     public double calcularPorcentajeUtilizacion(double pesoMaximo) {
         if (pesoMaximo <= 0) {
             return 0.0;
@@ -62,74 +43,69 @@ public class ViajeOptimo {
         return (pesoTotal / pesoMaximo) * 100.0;
     }
 
-    /**
-     * Devuelve la cantidad total de productos cargados en el viaje.
-     *
-     * @return la suma de todas las unidades de productos
-     */
+    /** @return cantidad total de unidades cargadas en el viaje. */
     public int contarCantidadTotalDeProductos() {
         return productos.values().stream().mapToInt(Integer::intValue).sum();
     }
 
-    /**
-     * Verifica si el viaje está vacío (sin productos o todos en cero).
-     *
-     * @return true si no hay productos cargados, false en caso contrario
-     */
+    /** @return true si no hay productos cargados. */
     public boolean estaVacio() {
         return productos.isEmpty() || contarCantidadTotalDeProductos() == 0;
     }
 
-    /**
-     * Elimina todos los productos del viaje y reinicia el peso total.
-     */
+    /** Limpia productos y métricas acumuladas del viaje. */
     public void limpiar() {
         productos.clear();
         pesoTotal = 0.0;
+        volumenTotal = 0.0;
     }
 
     /**
-     * Agrega un producto al viaje.
-     *
-     * @param nombre     el nombre del producto
-     * @param cantidad   la cantidad a agregar
-     * @param pesoUnitario el peso de una unidad del producto
+     * Incorpora producto al viaje y acumula su peso.
      */
     public void agregarProducto(String nombre, int cantidad, double pesoUnitario) {
-        if (cantidad <= 0 || pesoUnitario < 0) return;
-
+        if (cantidad <= 0 || pesoUnitario < 0) {
+            return;
+        }
         productos.merge(nombre, cantidad, Integer::sum);
         pesoTotal += cantidad * pesoUnitario;
     }
 
-    // Getters y Setters
-
+    /** @return mapa de productos y cantidades. */
     public Map<String, Integer> getProductos() {
         return productos;
     }
 
+    /** @return peso total transportado en kg. */
     public double getPesoTotal() {
         return pesoTotal;
     }
 
+    /** @return número de viaje. */
     public int getNumeroViaje() {
         return numeroViaje;
     }
 
+    /** @param numeroViaje nuevo identificador de viaje. */
     public void setNumeroViaje(int numeroViaje) {
         this.numeroViaje = numeroViaje;
     }
 
+    /** Acumula volumen de la carga. */
     public void agregarVolumen(double volumen) {
         this.volumenTotal += volumen;
     }
 
+    /** @return volumen total transportado. */
     public double getVolumenTotal() {
         return volumenTotal;
     }
 
+    /** @return porcentaje de uso de capacidad de volumen. */
     public double calcularPorcentajeUtilizacionVolumen(double volumenMaximo) {
-        if (volumenMaximo <= 0) return 0.0;
+        if (volumenMaximo <= 0) {
+            return 0.0;
+        }
         return (volumenTotal / volumenMaximo) * 100.0;
     }
 

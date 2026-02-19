@@ -1,28 +1,42 @@
 package ar.edu.ubp.sia.optimizaciondrones;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
- * Clase principal que ejecuta el Algoritmo Genético para optimización de viajes de drones,
- * considerando peso y volumen máximo por viaje.
+ * Ejecuta la lógica principal del algoritmo genético para optimizar viajes de drones.
+ * El fitness combina aprovechamiento de peso/volumen y minimización de cantidad de viajes.
  */
 public class AlgoritmoGenetico {
 
     private final Map<String, Double> pesosProductos;
-    private final Map<String, Double> volumenProductos; // volumen por producto
-    private final Map<String, Integer> pedido;           // pedido: producto -> cantidad
+    private final Map<String, Double> volumenProductos;
+    private final Map<String, Integer> pedido;
     private final ConfiguracionAG config;
-
     private final Seleccion operadorSeleccion;
     private final Cruza operadorCruza;
     private final Mutacion operadorMutacion;
-
-    private List<Cromosoma> poblacion;
     private final int longitudCromosoma;
-
     private final Map<String, Integer> productoIdMap;
     private final Map<Integer, String> idProductoMap;
 
+    private List<Cromosoma> poblacion;
+
+    /**
+     * Crea una instancia lista para ejecutar evolución sobre un pedido concreto.
+     *
+     * @param pesosProductos peso unitario por producto
+     * @param volumenProductos volumen unitario por producto
+     * @param pedido cantidad solicitada por producto
+     * @param config parámetros de ejecución del algoritmo
+     * @param seleccion estrategia de selección
+     * @param cruza estrategia de cruza
+     * @param mutacion estrategia de mutación
+     */
     public AlgoritmoGenetico(Map<String, Double> pesosProductos,
                              Map<String, Double> volumenProductos,
                              Map<String, Integer> pedido,
@@ -37,15 +51,12 @@ public class AlgoritmoGenetico {
         this.operadorSeleccion = seleccion;
         this.operadorCruza = cruza;
         this.operadorMutacion = mutacion;
-
-        // La longitud del cromosoma es la suma total de unidades a enviar
         this.longitudCromosoma = pedido.values().stream().mapToInt(Integer::intValue).sum();
 
         this.poblacion = new ArrayList<>();
-
-        // Construir mapas producto <-> id
         this.productoIdMap = new HashMap<>();
         this.idProductoMap = new HashMap<>();
+
         int id = 0;
         for (String producto : pedido.keySet()) {
             productoIdMap.put(producto, id);
@@ -55,7 +66,7 @@ public class AlgoritmoGenetico {
     }
 
     /**
-     * Crea un arreglo de genes con todos los productos según la cantidad pedida, mezclado aleatoriamente.
+     * Genera un set de genes inicial según las cantidades del pedido y lo mezcla aleatoriamente.
      */
     private int[] crearGenesIniciales() {
         int[] genes = new int[longitudCromosoma];
@@ -69,10 +80,9 @@ public class AlgoritmoGenetico {
             }
         }
 
-        // Barajar genes para diversidad inicial
-        Random rnd = new Random(42);
+        Random random = new Random(42);
         for (int i = genes.length - 1; i > 0; i--) {
-            int j = rnd.nextInt(i + 1);
+            int j = random.nextInt(i + 1);
             int temp = genes[i];
             genes[i] = genes[j];
             genes[j] = temp;
@@ -81,43 +91,35 @@ public class AlgoritmoGenetico {
         return genes;
     }
 
-    /**
-     * Inicializa la población con cromosomas aleatorios válidos (genes secuenciales mezclados).
-     */
+    /** Inicializa la población con cromosomas válidos del tamaño configurado. */
     private void inicializarPoblacion() {
         poblacion.clear();
         for (int i = 0; i < config.getTamanoPoblacion(); i++) {
-            int[] genes = crearGenesIniciales();
-            Cromosoma cromosoma = new Cromosoma(genes);
-            poblacion.add(cromosoma);
+            poblacion.add(new Cromosoma(crearGenesIniciales()));
         }
     }
 
-    /**
-     * Evalúa la población asignando valores de aptitud a cada cromosoma.
-     */
+    /** Evalúa la aptitud de cada cromosoma de la población actual. */
     private void evaluarPoblacion() {
         for (Cromosoma cromosoma : poblacion) {
-            double fitness = evaluarFitness(cromosoma);
-            cromosoma.setFitness(fitness);
+            cromosoma.setFitness(evaluarFitness(cromosoma));
         }
     }
 
     /**
-     * Evalúa el fitness de un cromosoma según el uso total de peso y volumen en viajes válidos.
+     * Calcula el fitness de un cromosoma considerando cobertura completa del pedido,
+     * eficiencia media de carga y penalización por número de viajes.
      */
     private double evaluarFitness(Cromosoma cromosoma) {
         List<ViajeOptimo> viajes = decodificarCromosomaAViajes(cromosoma);
-
-        // Contar productos en viajes
         Map<String, Integer> productosEnViajes = new HashMap<>();
+
         for (ViajeOptimo viaje : viajes) {
             for (Map.Entry<String, Integer> entry : viaje.getProductos().entrySet()) {
                 productosEnViajes.merge(entry.getKey(), entry.getValue(), Integer::sum);
             }
         }
 
-        // Penalizar si faltan productos del pedido
         for (String producto : pedido.keySet()) {
             int cantidadPedido = pedido.get(producto);
             int cantidadEnviada = productosEnViajes.getOrDefault(producto, 0);
@@ -134,46 +136,33 @@ public class AlgoritmoGenetico {
         }
 
         double aprovechamientoPromedio = sumaAprovechamiento / viajes.size();
-
-        // Penalización para menos viajes (mejor si menos viajes)
         double penalizacionViajes = Math.pow(1.0 / viajes.size(), 2);
-        // Bonus para mejor aprovechamiento de peso/volumen
         double bonusAprovechamiento = Math.pow(aprovechamientoPromedio, 3);
 
-        double pesoAprovechamiento = 0.7;
-        double pesoViajes = 0.3;
-
-        double fitness = (bonusAprovechamiento * pesoAprovechamiento) + (penalizacionViajes * pesoViajes);
-
-        return fitness;
+        return (bonusAprovechamiento * 0.7) + (penalizacionViajes * 0.3);
     }
 
     /**
-     * Decodifica el cromosoma secuencial en viajes optimizando peso y volumen.
+     * Convierte el cromosoma en una secuencia de viajes respetando límites de peso y volumen.
      */
     private List<ViajeOptimo> decodificarCromosomaAViajes(Cromosoma cromosoma) {
         List<ViajeOptimo> viajes = new ArrayList<>();
         int numeroViaje = 1;
         ViajeOptimo viajeActual = new ViajeOptimo(numeroViaje);
-
         double pesoActual = 0.0;
         double volumenActual = 0.0;
-
-        int productosAgregados = 0;  // contador total agregado
 
         for (int gen : cromosoma.getGenes()) {
             String producto = idProductoMap.get(gen);
             if (producto == null) {
-                System.out.println("Producto con id " + gen + " no encontrado en idProductoMap");
                 continue;
             }
 
             double pesoUnitario = pesosProductos.get(producto);
             double volumenUnitario = volumenProductos.get(producto);
 
-            // Verifica si cabe en el viaje actual, si no, crea uno nuevo
-            if (pesoActual + pesoUnitario > config.getPesoMaximoPorViaje() ||
-                    volumenActual + volumenUnitario > config.getCapacidadVolumenCaja()) {
+            if (pesoActual + pesoUnitario > config.getPesoMaximoPorViaje()
+                    || volumenActual + volumenUnitario > config.getCapacidadVolumenCaja()) {
                 if (!viajeActual.estaVacio()) {
                     viajes.add(viajeActual);
                 }
@@ -184,25 +173,21 @@ public class AlgoritmoGenetico {
 
             viajeActual.agregarProducto(producto, 1, pesoUnitario);
             viajeActual.agregarVolumen(volumenUnitario);
-
             pesoActual += pesoUnitario;
             volumenActual += volumenUnitario;
-
-            productosAgregados++;
         }
 
         if (!viajeActual.estaVacio()) {
             viajes.add(viajeActual);
         }
 
-        System.out.println("Total productos esperados (genes): " + cromosoma.getLongitud());
-        System.out.println("Total productos agregados a viajes: " + productosAgregados);
-
         return viajes;
     }
 
     /**
-     * Ejecuta el algoritmo genético principal.
+     * Ejecuta el proceso evolutivo completo y devuelve el mejor resultado encontrado.
+     *
+     * @return resultado con mejor solución, historial de fitness y metadatos de ejecución
      */
     public ResultadoOptimizacion ejecutar() {
         List<Double> historialFitness = new ArrayList<>();
@@ -216,7 +201,6 @@ public class AlgoritmoGenetico {
         for (int gen = 0; gen < config.getNumeroGeneraciones(); gen++) {
             List<Cromosoma> nuevaPoblacion = new ArrayList<>();
 
-            // Guardamos el mejor cromosoma de la generación anterior (elitismo)
             Collections.sort(poblacion);
             Cromosoma mejor = poblacion.get(0);
             nuevaPoblacion.add(mejor.clonar());
@@ -229,8 +213,13 @@ public class AlgoritmoGenetico {
                         ? operadorCruza.cruzar(padre1, padre2)
                         : new Cromosoma[]{padre1.clonar(), padre2.clonar()};
 
-                if (Math.random() < config.getProbabilidadMutacion()) operadorMutacion.mutar(hijos[0]);
-                if (Math.random() < config.getProbabilidadMutacion() && nuevaPoblacion.size() + 1 < config.getTamanoPoblacion()) operadorMutacion.mutar(hijos[1]);
+                if (Math.random() < config.getProbabilidadMutacion()) {
+                    operadorMutacion.mutar(hijos[0]);
+                }
+                if (Math.random() < config.getProbabilidadMutacion()
+                        && nuevaPoblacion.size() + 1 < config.getTamanoPoblacion()) {
+                    operadorMutacion.mutar(hijos[1]);
+                }
 
                 nuevaPoblacion.add(hijos[0]);
                 if (nuevaPoblacion.size() < config.getTamanoPoblacion()) {
@@ -241,7 +230,6 @@ public class AlgoritmoGenetico {
             poblacion = nuevaPoblacion;
             evaluarPoblacion();
 
-            // Actualizamos mejor resultado si corresponde
             Collections.sort(poblacion);
             mejor = poblacion.get(0);
             if (mejor.getFitness() > resultado.getMejorAptitud()) {
@@ -253,9 +241,6 @@ public class AlgoritmoGenetico {
         }
 
         resultado.setHistorialFitness(historialFitness);
-
         return resultado;
     }
-
-
 }
