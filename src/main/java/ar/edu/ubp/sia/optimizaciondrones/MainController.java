@@ -24,6 +24,9 @@ import java.util.Map;
  * Orquesta la captura de datos de entrada y la ejecución del proceso de optimización.
  */
 public class MainController {
+    private static final double PROBABILIDAD_CRUZA = 0.8;
+    private static final double PROBABILIDAD_MUTACION = 0.1;
+
     @FXML private ComboBox<String> cbSeleccion;
     @FXML private ComboBox<String> cbCruza;
     @FXML private ComboBox<String> cbMutacion;
@@ -122,6 +125,11 @@ public class MainController {
         }
 
         productos.add(new Producto(nombre, peso, cantidad, ancho, alto, profundidad));
+        limpiarFormularioProducto();
+    }
+
+    /** Limpia los campos de carga del producto luego de una alta exitosa. */
+    private void limpiarFormularioProducto() {
         tfNombre.clear();
         tfPeso.clear();
         tfCantidad.clear();
@@ -159,8 +167,8 @@ public class MainController {
                 cbMutacion.getValue(),
                 Integer.parseInt(tfPoblacion.getText()),
                 Integer.parseInt(tfGeneraciones.getText()),
-                0.8,
-                0.1,
+                PROBABILIDAD_CRUZA,
+                PROBABILIDAD_MUTACION,
                 Integer.parseInt(tfPesoDron.getText()),
                 Double.parseDouble(tfVolumenDron.getText())
         );
